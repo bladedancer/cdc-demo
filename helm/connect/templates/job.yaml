@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-connect
+  labels:
+    {{- include "connect.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+      - name: init-service
+        image: busybox:1.28
+        command: ['sh', '-c', "until nslookup {{ include "connect.fullname" . }}.{{.Release.Namespace}}.svc.cluster.local; do echo waiting for {{ include "connect.fullname" . }}; sleep 2; done"]
+      - name: wait-for-connect
+        image: curlimages/curl:latest
+        command: ["/bin/sh","-c"]
+        args: ["while [ $(curl -sw '%{http_code}' http://{{ include "connect.fullname" . }}.{{.Release.Namespace}}.svc.cluster.local:{{ .Values.service.port }} -o /dev/null) -ne 200 ]; do sleep 5; echo 'Waiting for the connect...'; done"]
+      containers:
+      - name: create-connector
+        image: curlimages/curl:latest
+        args:
+          {{- if $.Values.argsTemplate }}
+          {{ tpl $.Values.argsTemplate $ | nindent 12}}
+          {{- else }}
+          {{ toYaml .Values.args | nindent 12 }}
+          {{- end }}
+      restartPolicy: OnFailure
+  backoffLimit: 4
