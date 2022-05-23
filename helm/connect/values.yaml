@@ -83,15 +83,13 @@ connectorTemplate: |-
     "name": "cdc-connector", 
     "config": {
       "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-      "tasks.max": "1",
       "database.hostname": "postgresql",
       "database.port": "5432",
       "database.user": "postgres",
       "database.password": "postgres",
-      "database.dbname" : "postgres",
-      "database.server.name": "postgresql",
-      "tombstones.on.delete" : "false",
-      "database.whitelist": "postgres",
+      "database.dbname" : "apicentral",
+      "database.server.name": "apicentral",
+      "table.include.list": "public.testusr",
       "plugin.name": "pgoutput"
     }
   }
